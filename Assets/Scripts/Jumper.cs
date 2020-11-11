@@ -5,7 +5,7 @@ using Unity.MLAgents;
 using Unity.MLAgents.Sensors;
 using UnityEngine;
 
-public class Jumper : MonoBehaviour
+public class Jumper : Agent
 {
     [SerializeField] private float jumpForce;
     [SerializeField] private KeyCode jumpKey;
@@ -16,11 +16,23 @@ public class Jumper : MonoBehaviour
     private int score = 0;
     public event Action OnReset;
     
-    public void Awake()
-    {
-        rBody = GetComponent<Rigidbody>();
-        startingPosition = transform.position;
-    }
+	// Awake is called when the script instance is being loaded.
+	protected void Awake()
+	{
+		
+	}
+	public override void Initialize()
+	{
+		
+		
+	}
+	// Start is called on the frame when a script is enabled just before any of the Update methods is called the first time.
+	protected void Start()
+	{
+		rBody = GetComponent<Rigidbody>();
+		startingPosition = transform.position;
+	}
+
     
     private void Jump()
     {
@@ -30,13 +42,35 @@ public class Jumper : MonoBehaviour
             jumpIsReady = false;
         }
     }
+	public override void OnEpisodeBegin()
+	{
+		Reset();
+	}
 
-    private void Update()
-    {
-        if (Input.GetKey(jumpKey))
-            Jump();
-    }
-
+	public override void OnActionReceived(float[] vectorAction)
+	{
+		if(Mathf.FloorToInt(vectorAction[0]) == 1)
+		{
+			Jump();
+		}
+	}
+	public override void Heuristic(float[] actionsOut)
+	{
+		actionsOut[0] = 0;
+		if (Input.GetKey(jumpKey))
+		{
+			actionsOut[0] = 1;
+		}
+	}
+	// This function is called every fixed framerate frame, if the MonoBehaviour is enabled.
+	protected void FixedUpdate()
+	{
+		if(jumpIsReady)
+		{
+			RequestDecision();
+		}
+	}
+	
     private void Reset()
     {
         score = 0;
@@ -55,13 +89,19 @@ public class Jumper : MonoBehaviour
             jumpIsReady = true;
         
         else if (collidedObj.gameObject.CompareTag("Mover") || collidedObj.gameObject.CompareTag("DoubleMover"))
-            Reset();
+        {
+        	AddReward(-1f);
+        	Debug.Log("Crashed: "+GetCumulativeReward());
+        	EndEpisode();
+        }
     }
 
     private void OnTriggerEnter(Collider collidedObj)
     {
         if (collidedObj.gameObject.CompareTag("score"))
         {
+        	AddReward(0.1f);
+        	//Debug.Log(GetCumulativeReward());
             score++;
             ScoreCollector.Instance.AddScore(score);
         }
