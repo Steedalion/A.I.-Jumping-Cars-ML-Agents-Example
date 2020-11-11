@@ -54,8 +54,8 @@ Okay, now let’s jump into the *Jumper.cs* script. There are a few essential me
 
 ```csharp
 public override void Initialize(){...}
-public override void OnActionReceived(float[] vectorAction){...}
 public override void OnEpisodeBegin(){...}
+public override void OnActionReceived(float[] vectorAction){...}
 public override void Heuristic(float[] actionsOut){...}
 ```
 
@@ -69,6 +69,13 @@ public override void Initialize()
  startingPosition = transform.position;  
 }
 ```
+Next we'll reset the environment everytime a new training episode begins.
+
+```csharp
+public override void OnEpisodeBegin()
+{  
+ Reset(); 
+}
 
 Now we have to handle the actions. The *OnActionReceived*() method has a float array parameter. As we only have a single branch, only the first element is interesting for us. The value of this will either be 0 or 1, so again very simple. Let’s determine that 0 is doing nothing and a 1 is for jumping. The great thing about coding nothing is that we have to code nothing, meaning we only have to check for the case of 1. Just to be safe, I will floor the float to an int before equality checking. **Bam**, this is our action function:
 
